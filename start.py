@@ -50,9 +50,9 @@ logger = logging.getLogger('clusterdock.{}'.format(__name__))
 def main(args):
     quiet = not args.verbose
 
-    node_image = '{}/{}/topology_pulsar:pulsar-{}'.format(args.registry,
-                                                          args.namespace or DEFAULT_NAMESPACE,
-                                                          args.pulsar_version)
+    node_image = '{}/{}/topology_apache_pulsar:pulsar-{}'.format(args.registry,
+                                                                 args.namespace or DEFAULT_NAMESPACE,
+                                                                 args.pulsar_version)
     ports = [{WEB_SERVICE_PORT: WEB_SERVICE_PORT} if args.predictable else WEB_SERVICE_PORT,
              {WEB_SERVICE_TLS_PORT: WEB_SERVICE_TLS_PORT} if args.predictable else WEB_SERVICE_TLS_PORT,
              {BROKER_SERVICE_PORT: BROKER_SERVICE_PORT} if args.predictable else BROKER_SERVICE_PORT,

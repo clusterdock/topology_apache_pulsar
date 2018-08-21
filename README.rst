@@ -17,15 +17,15 @@ with the ``clusterdock`` script:
 
 .. code-block:: console
 
-    $ git clone https://github.com/clusterdock/topology_pulsar.git
-    $ pip3 install -r topology_pulsar/requirements.txt
-    $ clusterdock start topology_pulsar
+    $ git clone https://github.com/clusterdock/topology_apache_pulsar.git
+    $ pip3 install -r topology_apache_pulsar/requirements.txt
+    $ clusterdock start topology_apache_pulsar
 
 To see full usage instructions for the ``start`` action, use ``-h``/``--help``:
 
 .. code-block:: console
 
-    $ clusterdock start topology_pulsar -h
+    $ clusterdock start topology_apache_pulsar -h
     usage: clusterdock start [--always-pull] [-c name] [--namespace ns] [-n nw]
                              [-o sys] [-p port] [-r url] [-h]
                              [--proxy-node-name hostname] [--pulsar-version ver]
