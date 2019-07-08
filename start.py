@@ -309,4 +309,5 @@ def execute_node_command(node, command, quiet, fail_message=None):
     command_out = node.execute(command, quiet=quiet)
     if fail_message and command_out.exit_code != 0:
         raise Exception('{} on node ({}) with exit code ({}). Full output:'
-                        '\n{}'.format(node.hostname, command.exit_code, textwrap.indent(command.output, prefix='    ')))
+                        '\n{}'.format(command, node.hostname, command_out.exit_code,
+                                      textwrap.indent(command_out.output, prefix='    ')))
