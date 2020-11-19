@@ -290,11 +290,7 @@ def main(args):
     logger.info('Performing health check on Pulsar cluster (%s) ...', args.pulsar_cluster_name)
     def condition(node, cluster_name, command):
         command_status = node.execute(command, quiet=True)
-        # At some point Pulsar changed output format to enclose cluster name with quotes, so we are removing them if they are there
-        listed_cluster_name = command_status.output.strip()
-        if listed_cluster_name.startswith('"') and listed_cluster_name.endswith('"'):
-            listed_cluster_name = listed_cluster_name[1:-1]
-        return command_status.exit_code == 0 and listed_cluster_name == cluster_name
+        return command_status.exit_code == 0 and command_status.output.strip().strip('"') == cluster_name
     wait_for_condition(condition=condition, condition_args=[proxy_node, args.pulsar_cluster_name,
                                                             '{}/bin/pulsar-admin clusters list'.format(PULSAR_HOME)])
 
