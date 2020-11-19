@@ -290,7 +290,7 @@ def main(args):
     logger.info('Performing health check on Pulsar cluster (%s) ...', args.pulsar_cluster_name)
     def condition(node, cluster_name, command):
         command_status = node.execute(command, quiet=True)
-        return command_status.exit_code == 0 and command_status.output.strip() == cluster_name
+        return command_status.exit_code == 0 and command_status.output.strip().strip('"') == cluster_name
     wait_for_condition(condition=condition, condition_args=[proxy_node, args.pulsar_cluster_name,
                                                             '{}/bin/pulsar-admin clusters list'.format(PULSAR_HOME)])
 
