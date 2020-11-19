@@ -12,22 +12,22 @@
 
 FROM clusterdock/topology_nodebase:centos6.8
 
-ARG JDK_URL=http://download.oracle.com/otn-pub/java/jdk/8u181-b13/96a7b8442fe848ef90c96a2fad6ed6d1/jdk-8u181-linux-x64.tar.gz
+ARG JDK_PATH=jdk-8u271-linux-x64.tar.gz
 ARG JCE_URL=http://download.oracle.com/otn-pub/java/jce/8/jce_policy-8.zip
-ARG JDK_DIRECTORY=/usr/java/jdk1.8.0_181
-ARG PULSAR_URL=http://archive.apache.org/dist/incubator/pulsar/pulsar-2.0.1-incubating/apache-pulsar-2.0.1-incubating-bin.tar.gz
+ARG JDK_DIRECTORY=/usr/java/jdk1.8.0_271
+ARG PULSAR_VERSION=2.2.1
+ARG PULSAR_URL=http://archive.apache.org/dist/pulsar/pulsar-${PULSAR_VERSION}/apache-pulsar-${PULSAR_VERSION}-bin.tar.gz
 ARG PULSAR_DIRECTORY=/opt/pulsar
 
-RUN yum -y update && \
-    yum -y install unzip
-
 # Java setup
-RUN wget --no-check-certificate \
-        --header "Cookie: oraclelicense=accept-securebackup-cookie" -O /tmp/jdk.tar.gz \
-        "${JDK_URL}" && \
-    mkdir -p /usr/java && \
+COPY ${JDK_PATH} /tmp/jdk.tar.gz
+RUN mkdir -p /usr/java && \
     tar xf /tmp/jdk.tar.gz -C /usr/java && \
     rm -f /tmp/jdk.tar.gz
+
+# Update OS
+RUN yum -y update && \
+    yum -y install unzip
 
 RUN wget --no-check-certificate \
         --no-cookies --header "Cookie: oraclelicense=accept-securebackup-cookie" -O /tmp/unlimited_jce_policy.zip \
