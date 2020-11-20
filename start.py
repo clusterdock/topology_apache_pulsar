@@ -193,7 +193,8 @@ def main(args):
             broker_properties.update({'tlsEnabled': 'true',
                                       'tlsCertificateFilePath': '{}/broker.cert.pem'.format(TLS_DIR),
                                       'tlsKeyFilePath': '{}/broker.key-pk8.pem'.format(TLS_DIR),
-                                      'tlsTrustCertsFilePath': '{}/certs/ca.cert.pem'.format(TLS_DIR)})
+                                      'tlsTrustCertsFilePath': '{}/certs/ca.cert.pem'.format(TLS_DIR),
+                                      'webServicePortTls': '8443'})
             node.put_file(BROKER_CONF, PropertiesFile.dumps(broker_properties))
 
         proxy_conf = proxy_node.get_file(PROXY_CONF)
@@ -203,7 +204,8 @@ def main(args):
                                  'tlsKeyFilePath': '{}/broker.key-pk8.pem'.format(TLS_DIR),
                                  'tlsTrustCertsFilePath': '{}/certs/ca.cert.pem'.format(TLS_DIR),
                                  'tlsEnabledWithBroker': 'true',
-                                 'brokerClientTrustCertsFilePath': '{}/certs/ca.cert.pem'.format(TLS_DIR)})
+                                 'brokerClientTrustCertsFilePath': '{}/certs/ca.cert.pem'.format(TLS_DIR),
+                                 'webServicePortTls': '8443'})
         proxy_node.put_file(PROXY_CONF, PropertiesFile.dumps(proxy_properties))
 
         for node in nodes:
