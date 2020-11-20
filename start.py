@@ -190,7 +190,8 @@ def main(args):
         for node in broker_nodes:
             broker_conf = node.get_file(BROKER_CONF)
             broker_properties = PropertiesFile.loads(broker_conf)
-            broker_properties.update({'tlsEnabled': 'true',
+            broker_properties.update({'brokerServicePortTls': '6651',
+                                      'tlsEnabled': 'true',
                                       'tlsCertificateFilePath': '{}/broker.cert.pem'.format(TLS_DIR),
                                       'tlsKeyFilePath': '{}/broker.key-pk8.pem'.format(TLS_DIR),
                                       'tlsTrustCertsFilePath': '{}/certs/ca.cert.pem'.format(TLS_DIR),
@@ -199,7 +200,8 @@ def main(args):
 
         proxy_conf = proxy_node.get_file(PROXY_CONF)
         proxy_properties = PropertiesFile.loads(proxy_conf)
-        proxy_properties.update({'tlsEnabledInProxy': 'true',
+        proxy_properties.update({'servicePortTls': '6651',
+                                 'tlsEnabledInProxy': 'true',
                                  'tlsCertificateFilePath': '{}/broker.cert.pem'.format(TLS_DIR),
                                  'tlsKeyFilePath': '{}/broker.key-pk8.pem'.format(TLS_DIR),
                                  'tlsTrustCertsFilePath': '{}/certs/ca.cert.pem'.format(TLS_DIR),
