@@ -190,20 +190,24 @@ def main(args):
         for node in broker_nodes:
             broker_conf = node.get_file(BROKER_CONF)
             broker_properties = PropertiesFile.loads(broker_conf)
-            broker_properties.update({'tlsEnabled': 'true',
+            broker_properties.update({'brokerServicePortTls': '6651',
+                                      'tlsEnabled': 'true',
                                       'tlsCertificateFilePath': '{}/broker.cert.pem'.format(TLS_DIR),
                                       'tlsKeyFilePath': '{}/broker.key-pk8.pem'.format(TLS_DIR),
-                                      'tlsTrustCertsFilePath': '{}/certs/ca.cert.pem'.format(TLS_DIR)})
+                                      'tlsTrustCertsFilePath': '{}/certs/ca.cert.pem'.format(TLS_DIR),
+                                      'webServicePortTls': '8443'})
             node.put_file(BROKER_CONF, PropertiesFile.dumps(broker_properties))
 
         proxy_conf = proxy_node.get_file(PROXY_CONF)
         proxy_properties = PropertiesFile.loads(proxy_conf)
-        proxy_properties.update({'tlsEnabledInProxy': 'true',
+        proxy_properties.update({'servicePortTls': '6651',
+                                 'tlsEnabledInProxy': 'true',
                                  'tlsCertificateFilePath': '{}/broker.cert.pem'.format(TLS_DIR),
                                  'tlsKeyFilePath': '{}/broker.key-pk8.pem'.format(TLS_DIR),
                                  'tlsTrustCertsFilePath': '{}/certs/ca.cert.pem'.format(TLS_DIR),
                                  'tlsEnabledWithBroker': 'true',
-                                 'brokerClientTrustCertsFilePath': '{}/certs/ca.cert.pem'.format(TLS_DIR)})
+                                 'brokerClientTrustCertsFilePath': '{}/certs/ca.cert.pem'.format(TLS_DIR),
+                                 'webServicePortTls': '8443'})
         proxy_node.put_file(PROXY_CONF, PropertiesFile.dumps(proxy_properties))
 
         for node in nodes:
@@ -290,7 +294,7 @@ def main(args):
     logger.info('Performing health check on Pulsar cluster (%s) ...', args.pulsar_cluster_name)
     def condition(node, cluster_name, command):
         command_status = node.execute(command, quiet=True)
-        return command_status.exit_code == 0 and command_status.output.strip().strip('"') == cluster_name
+        return command_status.exit_code == 0 and command_status.output.splitlines()[-1].strip().strip('"') == cluster_name
     wait_for_condition(condition=condition, condition_args=[proxy_node, args.pulsar_cluster_name,
                                                             '{}/bin/pulsar-admin clusters list'.format(PULSAR_HOME)])
 
