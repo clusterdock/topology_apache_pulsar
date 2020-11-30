@@ -143,7 +143,8 @@ def main(args):
     proxy_conf = proxy_node.get_file(PROXY_CONF)
     proxy_properties = PropertiesFile.loads(proxy_conf)
     proxy_properties.update({'zookeeperServers': zk_servers_conf,
-                             'configurationStoreServers': zk_servers_conf})
+                             'configurationStoreServers': zk_servers_conf,
+                             'httpNumThreads': '8'})
     proxy_node.put_file(PROXY_CONF, PropertiesFile.dumps(proxy_properties))
 
     # TLS
