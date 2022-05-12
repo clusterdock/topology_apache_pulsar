@@ -14,6 +14,7 @@
 import logging
 import os
 import textwrap
+from packaging.version import Version
 
 from javaproperties import PropertiesFile
 
@@ -27,6 +28,7 @@ BROKER_SERVICE_TLS_PORT = 6651
 WEB_SERVICE_PORT = 8080
 WEB_SERVICE_TLS_PORT = 8443
 
+PULSAR_BIN = '/opt/pulsar/bin'
 PULSAR_HOME = '/opt/pulsar'
 
 BOOKKEEPER_CONF = '{}/conf/bookkeeper.conf'.format(PULSAR_HOME)
@@ -48,7 +50,12 @@ logger = logging.getLogger('clusterdock.{}'.format(__name__))
 
 
 def main(args):
+    if args.jwt and not args.tls:
+        raise Exception('Always use TLS encryption when using JWT authentication')
+    if args.jwt and Version(args.pulsar_version) < Version("2.3.0"):
+        raise Exception(f'Pulsar version {args.pulsar_version} does not support JWT authentication')
     quiet = not args.verbose
+
 
     node_image = '{}/{}/topology_apache_pulsar:pulsar-{}'.format(args.registry,
                                                                  args.namespace or DEFAULT_NAMESPACE,
@@ -280,6 +287,68 @@ def main(args):
                                           'authParams': ('tlsCertFile:{dir}/admin.cert.pem,tlsKeyFile:'
                                                          '{dir}/admin.key-pk8.pem').format(dir=TLS_CLIENT_DIR)})
                 node.put_file(CLIENT_CONF, PropertiesFile.dumps(client_properties))
+
+        if args.jwt:
+            jwt_file_path = f'{PULSAR_HOME}/jwt.token'
+            secret_key_file_path = f'{PULSAR_HOME}/secret.key'
+
+            jwt_commands = [
+                f'{PULSAR_BIN}/pulsar tokens create-secret-key --output {secret_key_file_path} --base64',
+                f'{PULSAR_BIN}/pulsar tokens create --secret-key file://{secret_key_file_path} --subject admin > {jwt_file_path}',
+                f'{PULSAR_BIN}/pulsar-admin namespaces grant-permission public/default --role admin --actions produce,consume'
+            ]
+            execute_node_command(proxy_node, " && ".join(jwt_commands), quiet=quiet)
+
+            jwt_token_cmd = proxy_node.execute(f'cat {jwt_file_path}', quiet=quiet)
+            if jwt_token_cmd.exit_code != 0:
+                raise Exception(f'JSON Web Token could not be retrieved: {jwt_token_cmd.output}')
+            jwt_token = jwt_token_cmd.output.strip()
+
+            proxy_conf = proxy_node.get_file(PROXY_CONF)
+            proxy_properties = PropertiesFile.loads(proxy_conf)
+            proxy_properties.update({
+                # For clients connecting to the proxy
+                'authenticationEnabled': 'true',
+                'authorizationEnabled': 'true',
+                'authenticationProviders': 'org.apache.pulsar.broker.authentication.AuthenticationProviderToken',
+                'tokenSecretKey': f'file://{secret_key_file_path}',
+
+                # For the proxy to connect to brokers
+                'brokerClientAuthenticationPlugin': 'org.apache.pulsar.client.impl.auth.AuthenticationToken',
+                'brokerClientAuthenticationParameters': f'token:{jwt_token}',
+
+                # Whether client authorization credentials are forwarded to the broker for re-authorization.
+                # Authentication must be enabled via authenticationEnabled=true for this to take effect.
+                'forwardAuthorizationCredentials': 'true',
+            })
+            proxy_node.put_file(PROXY_CONF, PropertiesFile.dumps(proxy_properties))
+
+            secret_key_file = proxy_node.get_file(secret_key_file_path)
+            for node in broker_nodes:
+                broker_conf = node.get_file(BROKER_CONF)
+                broker_properties = PropertiesFile.loads(broker_conf)
+                broker_properties.update({
+                    # Configuration to enable authentication and authorization
+                    'authenticationEnabled': 'true',
+                    'authorizationEnabled': 'true',
+                    'authenticationProviders': 'org.apache.pulsar.broker.authentication.AuthenticationProviderToken',
+
+                    # Authentication settings of the broker itself. Used when the broker connects to other brokers, 
+                    # either in same or other clusters
+                    'brokerClientTlsEnabled': 'true',
+                    'brokerClientAuthenticationPlugin': 'org.apache.pulsar.client.impl.auth.AuthenticationToken',
+                    'brokerClientAuthenticationParameters': f'token:{jwt_token}',
+
+                    # If this flag is set then the broker authenticates the original Auth data
+                    # else it just accepts the originalPrincipal and authorizes it (if required).
+                    'authenticateOriginalAuthData': 'true',
+
+                    # If using secret key (Note: key files must be DER-encoded)
+                    'tokenSecretKey': f'file://{secret_key_file_path}',
+                })
+                node.put_file(BROKER_CONF, PropertiesFile.dumps(broker_properties))
+                node.put_file(secret_key_file_path, secret_key_file)
+
 
     # start broker nodes and proxy node
     for node in broker_nodes:

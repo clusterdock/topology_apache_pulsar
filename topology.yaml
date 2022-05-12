@@ -22,6 +22,9 @@ node groups:
         - broker-2
 
 start args:
+    --jwt:
+        action: store_true
+        help: If specified, configure Pulsar for using JWT authentication
     --proxy-node-name:
         default: pulsar
         help: Pulsar proxy node's host name
