@@ -42,7 +42,7 @@ ZOOKEEPER_CONF = '{}/conf/zookeeper.conf'.format(PULSAR_HOME)
 # Also, this gets volume mounted to all other nodes and hence available there too.
 CLUSTERDOCK_CLIENT_CONTAINER_DIR = '/etc/clusterdock'
 
-TLS_CONF_URL = 'https://raw.githubusercontent.com/apache/pulsar/master/site2/website/static/examples/openssl.cnf'
+TLS_CONF_URL = 'https://raw.githubusercontent.com/apache/pulsar-site/master/site2/website/static/examples/openssl.cnf'
 TLS_DIR = '{}/pulsar_tls'.format(CLUSTERDOCK_CLIENT_CONTAINER_DIR)
 TLS_CLIENT_DIR = '{}/client'.format(TLS_DIR)
 
