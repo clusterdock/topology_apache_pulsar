@@ -11,3 +11,4 @@
 # limitations under the License.
 
 javaproperties==0.3.0
+packaging
