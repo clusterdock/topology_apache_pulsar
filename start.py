@@ -320,8 +320,10 @@ def main(args):
                 # Whether client authorization credentials are forwarded to the broker for re-authorization.
                 # Authentication must be enabled via authenticationEnabled=true for this to take effect.
                 'forwardAuthorizationCredentials': 'true',
+                'superUserRoles': 'admin'
             })
             proxy_node.put_file(PROXY_CONF, PropertiesFile.dumps(proxy_properties))
+            set_client_conf_with_jwt_auth(proxy_node, jwt_token)
 
             secret_key_file = proxy_node.get_file(secret_key_file_path)
             for node in broker_nodes:
@@ -333,9 +335,9 @@ def main(args):
                     'authorizationEnabled': 'true',
                     'authenticationProviders': 'org.apache.pulsar.broker.authentication.AuthenticationProviderToken',
 
-                    # Authentication settings of the broker itself. Used when the broker connects to other brokers, 
+                    # Authentication settings of the broker itself. Used when the broker connects to other brokers,
                     # either in same or other clusters
-                    'brokerClientTlsEnabled': 'true',
+                    'brokerClientTlsEnabled': 'false',
                     'brokerClientAuthenticationPlugin': 'org.apache.pulsar.client.impl.auth.AuthenticationToken',
                     'brokerClientAuthenticationParameters': f'token:{jwt_token}',
 
@@ -345,9 +347,15 @@ def main(args):
 
                     # If using secret key (Note: key files must be DER-encoded)
                     'tokenSecretKey': f'file://{secret_key_file_path}',
+                    'proxyRoles': 'proxyadmin',
+                    'superUserRoles': 'proxyadmin,admin'
                 })
                 node.put_file(BROKER_CONF, PropertiesFile.dumps(broker_properties))
                 node.put_file(secret_key_file_path, secret_key_file)
+                set_client_conf_with_jwt_auth(node, jwt_token)
+
+            for node in zk_nodes:
+                set_client_conf_with_jwt_auth(node, jwt_token)
 
 
     # start broker nodes and proxy node
@@ -385,3 +393,19 @@ def execute_node_command(node, command, quiet, fail_message=None):
         raise Exception('{} on node ({}) with exit code ({}). Full output:'
                         '\n{}'.format(command, node.hostname, command_out.exit_code,
                                       textwrap.indent(command_out.output, prefix='    ')))
+
+
+def set_client_conf_with_jwt_auth(node, jwt_token):
+    configuration = {
+        'authPlugin': 'org.apache.pulsar.client.impl.auth.AuthenticationToken',
+        'authParams': f'token:{jwt_token}',
+    }
+    set_client_conf(node, configuration)
+
+
+def set_client_conf(node, configuration):
+    client_conf = node.get_file(CLIENT_CONF)
+    client_properties = PropertiesFile.loads(client_conf)
+    client_properties.update(configuration)
+    node.put_file(CLIENT_CONF, PropertiesFile.dumps(client_properties))
+
