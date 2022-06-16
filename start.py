@@ -34,6 +34,7 @@ PULSAR_HOME = '/opt/pulsar'
 BOOKKEEPER_CONF = '{}/conf/bookkeeper.conf'.format(PULSAR_HOME)
 BROKER_CONF = '{}/conf/broker.conf'.format(PULSAR_HOME)
 CLIENT_CONF = '{}/conf/client.conf'.format(PULSAR_HOME)
+PULSAR_ENV = '{}/conf/pulsar_env.sh'.format(PULSAR_HOME)
 PROXY_CONF = '{}/conf/proxy.conf'.format(PULSAR_HOME)
 ZOOKEEPER_CONF = '{}/conf/zookeeper.conf'.format(PULSAR_HOME)
 
@@ -82,6 +83,15 @@ def main(args):
     cluster.start(args.network)
 
     logger.info('Starting pulsar cluster (%s) version %s ...', args.pulsar_cluster_name, args.pulsar_version)
+
+    # Limit Pulsar max memory
+    if args.pulsar_max_memory:
+        max_memory = (f'PULSAR_MEM=" -Xms{args.pulsar_max_memory} -Xmx{args.pulsar_max_memory} '
+                      f'-XX:MaxDirectMemorySize={args.pulsar_max_memory}"')
+        for node in nodes:
+            pulsar_env = node.get_file(PULSAR_ENV)
+            pulsar_env = [line if 'PULSAR_MEM=' not in line else max_memory for line in pulsar_env.splitlines()]
+            node.put_file(PULSAR_ENV, '\n'.join(pulsar_env))
 
     # zookeeper
     for idx, node in enumerate(zk_nodes, start=1):

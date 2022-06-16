@@ -37,6 +37,8 @@ start args:
         default: pulsar-cluster
         help: Pulsar cluster name to use
         metavar: name
+    --pulsar-max-memory:
+        help: Pulsar memory to use (use m for MB and g for GB)
     --predictable:
         action: store_true
         help: If specified, attempt to expose container ports to the same port number on the host
