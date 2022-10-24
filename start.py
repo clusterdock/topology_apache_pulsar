@@ -47,6 +47,8 @@ TLS_CONF_URL = 'https://raw.githubusercontent.com/apache/pulsar-site/master/site
 TLS_DIR = '{}/pulsar_tls'.format(CLUSTERDOCK_CLIENT_CONTAINER_DIR)
 TLS_CLIENT_DIR = '{}/client'.format(TLS_DIR)
 
+CURRENT_DIR = os.path.dirname(os.path.realpath(__file__))
+
 logger = logging.getLogger('clusterdock.{}'.format(__name__))
 
 
@@ -169,7 +171,6 @@ def main(args):
     if args.tls:
         setup_commands = [
             'mkdir -p {}'.format(TLS_CLIENT_DIR),
-            'wget -P {} {}'.format(TLS_DIR, TLS_CONF_URL),
             'mkdir -p {dir}/certs {dir}/crl {dir}/newcerts {dir}/private'.format(dir=TLS_DIR),
             'chmod 700 {}/private'.format(TLS_DIR),
             'touch {}/index.txt'.format(TLS_DIR),
@@ -177,6 +178,9 @@ def main(args):
             'echo 1000 > {}/serial'.format(TLS_DIR),
         ]
         execute_node_command(proxy_node, ' && '.join(setup_commands), quiet, 'TLS system setup failed')
+
+        with open(os.path.join(CURRENT_DIR, 'resources/openssl.cnf')) as f:
+            proxy_node.put_file('{}/openssl.cnf'.format(TLS_DIR), f.read())
 
         ca_auth_commands = [
             'export CA_HOME={}'.format(TLS_DIR),
